@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    * {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    html {
+        height: 100%;
+    }
+
+    body {
+        color: rgba(51, 51, 51, 1);
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        height: 100%;
+        line-height: 1.5;
+        margin: 0;
+        overflow-y: auto;
+        padding: 20px;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .urlInput {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .title {
+        font-size: 10px;
+        opacity: 0.5;
+    }
+
+
+</style>
+<head>
+    <meta charset="UTF-8">
+    <title>Bearer Boost</title>
+
+</head>
+<body>
+<script>
+
+    //State
+    let state = {
+        environments: {
+            localstate: [
+                "localstate:8888/graphql/auth/test-login?cpr=111111111&duration-in-minutes=360",
+                "localstate:8888/graphql/auth/test-login?cpr=0404040404&duration-in-minutes=360",
+                "localstate:8888/graphql/auth/test-login?cpr=0606060606&duration-in-minutes=360",
+            ],
+            dev: [
+                "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360",
+                "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360"
+            ],
+            test: [
+                "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360",
+                "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=1111111111&duration-in-minutes=360",
+            ]
+        },
+        sorting: ["localstate", "dev", "test"]
+    };
+
+    function titleElement(text) {
+        let title = document.createElement('div');
+        title.innerText = text;
+        title.className = 'title';
+
+        return title;
+    }
+
+    function urlInputElement(url) {
+        let input = document.createElement('input');
+        input.value = url;
+        input.className = 'urlInput';
+
+        return input;
+    }
+
+    function resultElement() {
+        let result = document.createElement('div');
+
+    }
+
+    //build ui
+    (function () {
+        state.sorting.forEach(function (env) {
+            document.body.appendChild(titleElement(env));
+
+            state.environments[env].forEach(function (url) {
+                document.body.appendChild(urlInputElement(url));
+
+            });
+        });
+    })();
+
+
+    //update ui
+
+
+
+    //Util
+
+
+    //User interaction
+
+
+    //Dom manipulation
+
+
+</script>
+</body>
+</html>
