@@ -19,18 +19,28 @@
         line-height: 1.5;
         margin: 0;
         overflow-y: auto;
-        padding: 20px;
+        padding: 0 20px 20px 20px;
         -webkit-font-smoothing: antialiased;
     }
 
     .urlInput {
         width: 100%;
         font-size: 14px;
+        padding: 3px;
+        margin-bottom: 4px;
+    }
+
+    .urlInput:last-child {
+        margin-bottom: 0;
     }
 
     .title {
         font-size: 10px;
+        letter-spacing: 0.5px;
+        margin: 20px 0 4px 0;
         opacity: 0.5;
+        padding-left: 5px;
+        text-transform: uppercase;
     }
 
 
@@ -40,58 +50,83 @@
     <title>Bearer Boost</title>
 
 </head>
-<body>
+<body onload="init()">
+</body>
+
 <script>
 
     //State
     let state = {
-        environments: {
-            localstate: [
-                "localstate:8888/graphql/auth/test-login?cpr=111111111&duration-in-minutes=360",
-                "localstate:8888/graphql/auth/test-login?cpr=0404040404&duration-in-minutes=360",
-                "localstate:8888/graphql/auth/test-login?cpr=0606060606&duration-in-minutes=360",
-            ],
-            dev: [
-                "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360",
-                "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360"
-            ],
-            test: [
-                "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360",
-                "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=1111111111&duration-in-minutes=360",
-            ]
-        },
-        sorting: ["localstate", "dev", "test"]
+        environments: [
+            {
+                title: "localstate",
+                endpoints: [//Almost an endpoints :)
+                    {url: "http://localhost:8888/auth/test-login?cpr=0805970516&duration-in-minutes=360"},
+                    {url: "http://localhost:8888/auth/test-login?cpr=0404040404&duration-in-minutes=360"},
+                    {url: "http://localhost:8888/auth/test-login?cpr=0606060606&duration-in-minutes=360"},
+                ]
+            },
+            {
+                title: "dev",
+                endpoints: [
+                    {url: "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360"},
+                    {url: "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0804040404&duration-in-minutes=360"}
+                ]
+            },
+            {
+                title: "test",
+                endpoints: [
+                    {url: "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360"},
+                    {url: "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=1111111111&duration-in-minutes=360"},
+                ]
+            }],
     };
 
     function titleElement(text) {
-        let title = document.createElement('div');
-        title.innerText = text;
-        title.className = 'title';
+        let el = document.createElement('div');
+        el.innerText = text;
+        el.className = 'title';
 
-        return title;
+        return el;
     }
 
     function urlInputElement(url) {
-        let input = document.createElement('input');
-        input.value = url;
-        input.className = 'urlInput';
+        let el = document.createElement('input');
+        el.id = url;
+        el.value = url;
+        el.className = 'urlInput';
+        el.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                executeUrl(el.value);
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                console.log("up");
+                document.getElementById(previousUrl(url)).focus();
+            } else if (e.key === "ArrowDown") {
+                e.preventDefault();
+                console.log("Down");
+                document.getElementById(nextUrl(url)).focus();
+            }
 
-        return input;
+        });
+        return el;
     }
 
-    function resultElement() {
-        let result = document.createElement('div');
-
+    function resultElement(id) {
+        let el = document.createElement('div');
+        el.id = id;
+        el.className = "result";
+        return id;
     }
 
     //build ui
     (function () {
-        state.sorting.forEach(function (env) {
-            document.body.appendChild(titleElement(env));
+        state.environments.forEach(function (env) {
+            document.body.appendChild(titleElement(env.title));
 
-            state.environments[env].forEach(function (url) {
-                document.body.appendChild(urlInputElement(url));
-
+            env.endpoints.forEach(function (endpoint) {
+                document.body.appendChild(urlInputElement(endpoint.url));
             });
         });
     })();
@@ -100,16 +135,59 @@
     //update ui
 
 
-
-    //Util
-
-
     //User interaction
 
 
     //Dom manipulation
 
+    //util
+    function nextUrl(url) {
+        let index = state.urls.indexOf(url);
+        if(index + 1 ===  state.urls.length ){
+            return url;
+        }
+        return state.urls[index + 1];
+    }
+
+    function previousUrl(url) {
+        let index = state.urls.indexOf(url);
+        if(index ===  0){
+            return url;
+        }
+        return state.urls[index -1];
+    }
+
+
+    function collectUrls(){
+        let urls  = [];
+        state.environments.forEach(function (env) {
+            env.endpoints.forEach(function (endpoint) {
+                urls.push(endpoint.url);
+            });
+        });
+        return urls;
+    }
+
+    function init() {
+        state.urls = collectUrls();
+        console.log("urls" + state.urls);
+        document.getElementById(state.urls[0]).focus();
+    }
+
+    function executeUrl(url) {
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (this.readyState === 4 && this.status === 200) {
+                console.log(JSON.parse(this.responseText));
+            } else if (this.readyState === 4) {
+                console.log(this.responseText);
+            }
+
+        };
+        xhttp.open("GET", url, true);
+        xhttp.send();
+    }
 
 </script>
-</body>
 </html>
