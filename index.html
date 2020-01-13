@@ -43,6 +43,11 @@
         text-transform: uppercase;
     }
 
+    .result {
+        flex-grow: 1;
+        min-height: 100px;
+    }
+
 
 </style>
 <head>
@@ -101,11 +106,9 @@
                 executeUrl(el.value);
             } else if (e.key === "ArrowUp") {
                 e.preventDefault();
-                console.log("up");
                 document.getElementById(previousUrl(url)).focus();
             } else if (e.key === "ArrowDown") {
                 e.preventDefault();
-                console.log("Down");
                 document.getElementById(nextUrl(url)).focus();
             }
 
@@ -113,11 +116,11 @@
         return el;
     }
 
-    function resultElement(id) {
-        let el = document.createElement('div');
-        el.id = id;
+    function resultElement(){
+        let el = document.createElement("div");
+        el.id = "resultElement";
         el.className = "result";
-        return id;
+        return el;
     }
 
     //build ui
@@ -129,6 +132,8 @@
                 document.body.appendChild(urlInputElement(endpoint.url));
             });
         });
+
+        document.body.appendChild(resultElement())
     })();
 
 
@@ -179,7 +184,9 @@
 
         xhttp.onreadystatechange = function () {
             if (this.readyState === 4 && this.status === 200) {
+                document.getElementById("resultElement").style.background = "rgba(144,144,144,05)";
                 console.log(JSON.parse(this.responseText));
+
             } else if (this.readyState === 4) {
                 console.log(this.responseText);
             }
