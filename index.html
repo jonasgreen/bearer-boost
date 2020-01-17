@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+< lang="en">
 <style>
     * {
         -webkit-box-sizing: border-box;
@@ -23,29 +23,77 @@
         -webkit-font-smoothing: antialiased;
     }
 
+    .url-row {
+        position: relative;
+        height: 30px;
+        margin-bottom: 3px;
+    }
+
+    .title {
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        padding: 20px 0 4px 5px;
+        opacity: 0.5;
+        text-transform: uppercase;
+    }
+
     .urlInput {
+        position: absolute;
         width: 100%;
         font-size: 14px;
         padding: 3px;
         margin-bottom: 4px;
+        height: 28px;
     }
 
     .urlInput:last-child {
         margin-bottom: 0;
     }
 
-    .title {
-        font-size: 10px;
-        letter-spacing: 0.5px;
-        margin: 20px 0 4px 0;
-        opacity: 0.5;
-        padding-left: 5px;
-        text-transform: uppercase;
+    .result {
+        align-items: center;
+        white-space: nowrap;
+        justify-content: center;
+        position: absolute;
+        height: 26px;
+        right: 0;
+        top: 1px;
+        z-index: 1;
+        transition: width 300ms;
     }
 
-    .result {
-        flex-grow: 1;
-        min-height: 100px;
+    .result-running {
+        width: 4px;
+        height: 22px;
+        top: 2px;
+
+        border-radius: 4px;
+        right: 13px;
+        background: green;
+        animation: rotation 500ms infinite linear;
+    }
+
+    .result-success {
+        background: green;
+        color: white;
+        width: 250px;
+        display: flex;
+    }
+
+    .result-error {
+        background: red;
+        color: white;
+        width: 250px;
+        display: flex;
+    }
+
+    @keyframes rotation {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(359deg);
+        }
     }
 
 
@@ -65,24 +113,24 @@
         environments: [
             {
                 title: "localstate",
-                endpoints: [//Almost an endpoints :)
-                    {url: "http://localhost:8888/auth/test-login?cpr=0805970516&duration-in-minutes=360"},
-                    {url: "http://localhost:8888/auth/test-login?cpr=0404040404&duration-in-minutes=360"},
-                    {url: "http://localhost:8888/auth/test-login?cpr=0606060606&duration-in-minutes=360"},
+                urls: [
+                    "http://localhost:8888/auth/test-login?cpr=0805970516&duration-in-minutes=360",
+                    "http://localhost:8888/auth/test-login?cpr=0404040404&duration-in-minutes=360",
+                    "http://localhost:8888/auth/test-login?cpr=0606060606&duration-in-minutes=360",
                 ]
             },
             {
                 title: "dev",
-                endpoints: [
-                    {url: "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360"},
-                    {url: "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0804040404&duration-in-minutes=360"}
+                urls: [
+                    "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360",
+                    "https://api.dev.vurderingsportalen.dk/auth/test-login?cpr=0804040404&duration-in-minutes=360"
                 ]
             },
             {
                 title: "test",
-                endpoints: [
-                    {url: "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360"},
-                    {url: "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=1111111111&duration-in-minutes=360"},
+                urls: [
+                    "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=0404040404&duration-in-minutes=360",
+                    "https://api.test.vurderingsportalen.dk/auth/test-login?cpr=1111111111&duration-in-minutes=360",
                 ]
             }],
     };
@@ -91,19 +139,41 @@
         let el = document.createElement('div');
         el.innerText = text;
         el.className = 'title';
-
         return el;
     }
 
     function urlInputElement(url) {
-        let el = document.createElement('input');
-        el.id = url;
-        el.value = url;
-        el.className = 'urlInput';
-        el.addEventListener("keydown", function (e) {
+        let urlRow = document.createElement("div");
+        urlRow.className = "url-row";
+
+        let input = document.createElement('input');
+        let result = document.createElement("div");
+
+        input.id = url;
+        input.value = url;
+        input.className = 'urlInput';
+        input.addEventListener("keydown", function (e) {
             if (e.key === "Enter") {
                 e.preventDefault();
-                executeUrl(el.value);
+                result.innerText = "";
+                result.className = "result result-running";
+                executeUrl(
+                    input.value,
+                    function (r) {
+                        if (document.activeElement === input) {
+                            copyToClipboard(r);
+                            result.className = "result result-success";
+                            result.innerText = "Access-token copied to clipboard";
+                            input.focus();
+                        }
+                    },
+                    function (r) {
+                        if (document.activeElement === input) {
+                            result.className = "result result-error";
+                            result.innerText = "Unable to get Access-token"
+                        }
+                    });
+
             } else if (e.key === "ArrowUp") {
                 e.preventDefault();
                 document.getElementById(previousUrl(url)).focus();
@@ -111,16 +181,18 @@
                 e.preventDefault();
                 document.getElementById(nextUrl(url)).focus();
             }
-
         });
-        return el;
-    }
 
-    function resultElement(){
-        let el = document.createElement("div");
-        el.id = "resultElement";
-        el.className = "result";
-        return el;
+        input.addEventListener("blur", function (e) {
+            result.className = "result";
+            result.innerText = "";
+        });
+
+        result.className = "result";
+
+        urlRow.appendChild(input);
+        urlRow.appendChild(result);
+        return urlRow;
     }
 
     //build ui
@@ -128,27 +200,34 @@
         state.environments.forEach(function (env) {
             document.body.appendChild(titleElement(env.title));
 
-            env.endpoints.forEach(function (endpoint) {
-                document.body.appendChild(urlInputElement(endpoint.url));
+            env.urls.forEach(function (url) {
+                document.body.appendChild(urlInputElement(url));
             });
         });
 
-        document.body.appendChild(resultElement())
     })();
 
+    function copyToClipboard(r) {
+        let textArea = document.createElement("textarea");
+        textArea.value = r["access-token"];
+        textArea.style.position = "fixed";  //avoid scrolling to bottom
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
 
-    //update ui
+        try {
+            document.execCommand('copy');
+        } catch (err) {
+            console.error('Fallback: Oops, unable to copy', err);
+        }
 
-
-    //User interaction
-
-
-    //Dom manipulation
+        document.body.removeChild(textArea);
+    }
 
     //util
     function nextUrl(url) {
         let index = state.urls.indexOf(url);
-        if(index + 1 ===  state.urls.length ){
+        if (index + 1 === state.urls.length) {
             return url;
         }
         return state.urls[index + 1];
@@ -156,18 +235,18 @@
 
     function previousUrl(url) {
         let index = state.urls.indexOf(url);
-        if(index ===  0){
+        if (index === 0) {
             return url;
         }
-        return state.urls[index -1];
+        return state.urls[index - 1];
     }
 
 
-    function collectUrls(){
-        let urls  = [];
+    function collectUrls() {
+        let urls = [];
         state.environments.forEach(function (env) {
-            env.endpoints.forEach(function (endpoint) {
-                urls.push(endpoint.url);
+            env.urls.forEach(function (url) {
+                urls.push(url);
             });
         });
         return urls;
@@ -175,20 +254,18 @@
 
     function init() {
         state.urls = collectUrls();
-        console.log("urls" + state.urls);
         document.getElementById(state.urls[0]).focus();
     }
 
-    function executeUrl(url) {
+    function executeUrl(url, onSucces, onError) {
         let xhttp = new XMLHttpRequest();
 
         xhttp.onreadystatechange = function () {
             if (this.readyState === 4 && this.status === 200) {
-                document.getElementById("resultElement").style.background = "rgba(144,144,144,05)";
-                console.log(JSON.parse(this.responseText));
+                onSucces(JSON.parse(this.responseText));
 
             } else if (this.readyState === 4) {
-                console.log(this.responseText);
+                onError(this.responseText);
             }
 
         };
@@ -197,4 +274,5 @@
     }
 
 </script>
+<input id="hiddenElement" style="position: fixed; left: -2000px;"/>
 </html>
